@@ -74,6 +74,8 @@ namespace Ecommerce.Controllers
                     db.SaveChanges();
                 }
                 cartItem.ProductQuantity = item.Quantity;
+                cartItem.ProductStock = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Quantity;
+                cartItem.Id = item.Id;
                 cartItem.ProductImageUrl = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().ImageUrl;
                 cartItem.TotalPrice = item.Quantity * item.Product.Price;
                 cart.Add(cartItem);
@@ -128,6 +130,23 @@ namespace Ecommerce.Controllers
             db.SaveChanges();
             return RedirectToAction("GetCart","Cart");
 
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Customer")]
+        public IActionResult UpdateQuantity(int updatedQuantity,int cartId)
+        {
+           
+
+            string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+           
+            CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId && c.Id == cartId && c.OrderId == null).FirstOrDefault();
+            if (cartItem != null)
+            {
+                cartItem.Quantity = updatedQuantity;
+                db.SaveChanges();
+            }
+            return RedirectToAction("GetCart", "Cart");
         }
     }
 }

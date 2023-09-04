@@ -48,7 +48,38 @@
                         </form>
 </div>
                         <div class="col-md-4">
-                        @Html.DisplayFor(modelItem => item.ProductQuantity)
+
+                            <form method="post" asp-action="UpdateQuantity" asp-controller="Cart" >
+                                <input type="hidden" name="updatedQuantity" id="updatedQuantity" />
+                                <input type="hidden" name="cartId" id="cartId" value="@item.Id" />
+                                <select name="ProductQuantity" class="form-control" asp-for="@item.ProductQuantity" id="quantityDropdown">
+                                    @{
+                                        var quantityList = Enumerable.Range(1, item.ProductStock).ToList();
+                                    }
+
+                                    
+                                    @foreach (var quantity in quantityList)
+                                    {
+                                        if (item.ProductQuantity == quantity)
+                                        {
+                                            <option selected value="@quantity">
+                                                @quantity
+                                            </option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@quantity">
+                                                @quantity
+                                            </option>
+                                        }
+                                    }
+                                </select>
+                            </form>
+
+                         
+
+                            
+                        
 </div>
 
                             <div class="col-md-4">
@@ -139,3 +170,10 @@ foreach (var item in Model)
     
 </div>
 
+<script>
+    document.getElementById("quantityDropdown").addEventListener("change", function () {
+        var updatedQuantity = this.value;
+        document.getElementById("updatedQuantity").value = updatedQuantity;
+        this.form.submit();
+    })
+</script>
