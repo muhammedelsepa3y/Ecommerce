@@ -18,10 +18,15 @@ namespace Ecommerce.Controllers
             {
 
                 string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId && c.ProductId == id).FirstOrDefault();
-                if (cartItem != null)
+                CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId && c.ProductId == id && c.OrderId==null).FirstOrDefault();
+                if (cartItem != null )
                 {
-                    cartItem.Quantity++;
+                   
+                    if (cartItem.Quantity < db.Products.Where(p => p.Id == id).FirstOrDefault().Quantity)
+                    {
+                        cartItem.Quantity++;
+                    }
+                   
                 }
                 else
                 {
@@ -56,7 +61,7 @@ namespace Ecommerce.Controllers
         {
             string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             List<CartViewModel> cart = new List<CartViewModel>();
-            List <CartItem> cartItems =  db.CartItems.Where(c => c.CustomerId == userId&& c.Order==null).ToList();
+            List <CartItem> cartItems =  db.CartItems.Where(c => c.CustomerId == userId&& c.OrderId==null).ToList();
             foreach (CartItem item in cartItems)
             {
                 CartViewModel cartItem = new CartViewModel();
@@ -83,7 +88,7 @@ namespace Ecommerce.Controllers
         public IActionResult Delete(int id)
         {
             string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId &&  c.ProductId == id).FirstOrDefault();
+            CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId &&  c.ProductId == id&& c.OrderId==null).FirstOrDefault();
             db.CartItems.Remove(cartItem);
             db.SaveChanges();
             return RedirectToAction("GetCart");
@@ -96,7 +101,7 @@ namespace Ecommerce.Controllers
 
             
                 string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId && c.ProductId == id).FirstOrDefault();
+                CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId && c.ProductId == id && c.OrderId == null).FirstOrDefault();
                 cartItem.Quantity--;
             if (cartItem.Quantity == 0)
             { 
@@ -114,7 +119,7 @@ namespace Ecommerce.Controllers
 
 
             string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId && c.ProductId == id).FirstOrDefault();
+            CartItem cartItem = db.CartItems.Where(c => c.CustomerId == userId && c.ProductId == id && c.OrderId == null).FirstOrDefault();
             cartItem.Quantity++;
             if (cartItem.Quantity>db.Products.Where(p=>p.Id==id).FirstOrDefault().Quantity)
             {

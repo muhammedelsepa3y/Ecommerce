@@ -20,16 +20,21 @@ namespace Ecommerce.Controllers
                 string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 Order order = new Order();
                 order.OrderDate = DateTime.Now;
-                order.CartItems = db.CartItems.Where(c => c.CustomerId == userId).ToList();
+                      
+                List <CartItem> cartItems = db.CartItems.Where(c => c.CustomerId == userId&& c.OrderId==null).ToList();
+                order.CartItems = cartItems;
+                order.CustomerId = userId;
+
                 db.Orders.Add(order);
-                List <CartItem> cartItems = db.CartItems.Where(c => c.CustomerId == userId).ToList();
+                db.SaveChanges();
                 foreach (CartItem item in cartItems)
                 {
                     item.OrderId = order.Id;
-                    Product product = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault();
-                    product.Quantity -= item.Quantity;
+                    db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Quantity -= item.Quantity;
+                    db.CartItems.Update(item);
+                    
+                   
                 }
-            
                 db.SaveChanges();
                 return RedirectToAction("AllProducts", "Product");
             }
@@ -56,28 +61,24 @@ namespace Ecommerce.Controllers
         public IActionResult GetOrders()
         {
             string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            List<OrderViewModel> orders = new List<OrderViewModel>();
-            List<CartViewModel> cart = new List<CartViewModel>();
-            List<CartItem> cartItems = db.CartItems.Where(c => c.CustomerId == userId && c.Order != null).ToList();
-            foreach (CartItem item in cartItems)
+            List<OrderViewModel> ordersViewModel = new List<OrderViewModel>();
+            List<Order> orders = db.Orders.Where(o => o.CustomerId == userId).ToList();
+            foreach (Order order in orders)
             {
-                CartViewModel cartItem = new CartViewModel();
-                cartItem.ProductName = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Name;
-                cartItem.ProductId = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Id;
-                cartItem.ProductPrice = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Price;
-                cartItem.ProductQuantity = item.Quantity;
-                cartItem.ProductImageUrl = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().ImageUrl;
-                cartItem.TotalPrice = item.Quantity * item.Product.Price;
-                cart.Add(cartItem);
-                Order  order = db.Orders.Where(o => o.Id == item.OrderId).FirstOrDefault();
                 OrderViewModel orderViewModel = new OrderViewModel();
                 orderViewModel.Id = order.Id;
                 orderViewModel.OrderDate = order.OrderDate;
-                orderViewModel.CartItems = cart;
-                orders.Add(orderViewModel);
-
+                List<CartItem> cartItems = db.CartItems.Where(c => c.CustomerId == userId && c.OrderId ==order.Id).ToList();
+                decimal totalPrice = 0;
+                foreach (CartItem item in cartItems)
+                {
+                    totalPrice += item.Quantity * db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Price;
+                }
+                orderViewModel.TotalPrice = totalPrice;
+                ordersViewModel.Add(orderViewModel);
             }
-            return View(orders);
+     
+            return View(ordersViewModel);
             
 
         }
@@ -87,28 +88,28 @@ namespace Ecommerce.Controllers
         public IActionResult Details(int id)
         {
             string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-        List<OrderViewModel> orders = new List<OrderViewModel>();
-        List<CartViewModel> cart = new List<CartViewModel>();
-        List<CartItem> cartItems = db.CartItems.Where(c => c.CustomerId == userId && c.Order != null).ToList();
+        List<CartViewModel> carts = new List<CartViewModel>();
+        List<CartItem> cartItems = db.CartItems.Where(c => c.CustomerId == userId && c.OrderId == id).ToList();
+            decimal totalPrice = 0;
             foreach (CartItem item in cartItems)
             {
                 CartViewModel cartItem = new CartViewModel();
-        cartItem.ProductName = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Name;
+                cartItem.ProductName = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Name;
                 cartItem.ProductId = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Id;
                 cartItem.ProductPrice = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Price;
                 cartItem.ProductQuantity = item.Quantity;
                 cartItem.ProductImageUrl = db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().ImageUrl;
-                cartItem.TotalPrice = item.Quantity* item.Product.Price;
-        cart.Add(cartItem);
-                Order order = db.Orders.Where(o => o.Id == item.OrderId).FirstOrDefault();
-        OrderViewModel orderViewModel = new OrderViewModel();
-        orderViewModel.Id = order.Id;
-                orderViewModel.OrderDate = order.OrderDate;
-                orderViewModel.CartItems = cart;
-                orders.Add(orderViewModel);
+                cartItem.TotalPrice = item.Quantity* db.Products.Where(p => p.Id == item.ProductId).FirstOrDefault().Price;
+                
+                totalPrice += cartItem.TotalPrice;
+
+
+                carts.Add(cartItem);
+
 
             }
-            return View(orders);
+            ViewBag.TotalPrice = totalPrice;
+            return View(carts);
 
 
 }

@@ -5,6 +5,7 @@ namespace Ecommerce.Models
 {
     public class CartItem
     {
+        public int Id { get; set; }
 
         [Required(ErrorMessage = "Product ID is required.")]
         [ForeignKey("Product")]

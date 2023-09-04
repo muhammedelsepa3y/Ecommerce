@@ -29,11 +29,7 @@ namespace Ecommerce.Models
             base.OnConfiguring(optionsBuilder);
         }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) {
-
-            modelBuilder.Entity<CartItem>().HasKey(k => new { k.ProductId,k.CustomerId });
-            base.OnModelCreating(modelBuilder);
-        }
+  
 
 
     }
